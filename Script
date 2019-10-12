@@ -1,0 +1,77 @@
+
+function onEdit(e) 
+ {
+  var ui = SpreadsheetApp.getUi();  
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var val = SpreadsheetApp.getActiveSheet().getDataRange().getValues()
+  var editRange = sheet.getActiveRange();
+  var editRow = editRange.getRow();
+  var editCol = editRange.getColumn();
+  var range = sheet.getRange("I:I"); // Column ที่ต้องการนำมาเป็น Trigger เมื่อมีการเปลี่ยนแปลงค่า ใน Column นี้ เราจะให้ Line BOT Push Message ออกไป
+  var rangeRowStart = range.getRow();
+  var rangeRowEnd = rangeRowStart + range.getHeight()-1;
+  var rangeColStart = range.getColumn();
+  var rangeColEnd = rangeColStart + range.getWidth()-1;
+  
+  if (editRow >= rangeRowStart && editRow <= rangeRowEnd 
+      && editCol >= rangeColStart && editCol <= rangeColEnd)
+  {
+    var groupid;
+    var id = val[editRow-1][editCol-9]
+    var region = val[editRow-1][editCol-8]
+    var TestName = val[editRow-1][editCol-7]
+    var HeaderD = val[editRow-1][editCol-6]
+    var prov = val[editRow-1][editCol-5]
+    var alarmtype = val[editRow-1][editCol-4]
+    var alarmdate = val[editRow-1][editCol-3]
+    var alarmissue = val[editRow-1][editCol-2]
+    var linenotify = val[editRow-1][editCol-1]
+      
+      //ข้อความที่ต้องการจะให้ push ออกไป
+      var msg = 'Site: '+id +'\n'+'Region: '+region+'\n'+'Site Name: '+TestName+'\n'+'ASP Name: '+HeaderD+'\n'+'Province: '+prov+'\n'+'Alarm Type: '+alarmtype+'\n'+'Date: '+alarmdate+'\n'+'Alarm Issue: '+alarmissue;
+      
+      //กรณีให้ส่งแยก group โดยแยกข้อมูลตาม Col.B คือตัวแปร region
+      if (region == "TEST"){groupid = "C816820aa5....."};
+      if (region == "TEST2"){groupid = "Caf5e....."};
+      
+      // ให้มีการ Popup ขึ้นมาก่อนจะให้ BOT Push Message ออกไป โดยถ้า คลิ้ก Yes ถึงจะส่งออก
+      var response = ui.alert('Will U send to LINE?'+'\n'+'\n'+msg+'\n'+groupid,ui.ButtonSet.YES_NO);
+        if(response == ui.Button.YES){
+           ui.alert('Sent Alarm to LINE DONE');
+           pushMsg(msg,groupid);
+           }
+           else {
+                  ui.alert('Not Sent Alarm to LINE');
+                };
+      
+      //Logger.log(msg);
+      //Logger.log(groupid);
+
+  }
+ }
+///////////////////////// sendLineNotify///////////////////////////////
+function pushMsg(Msg,groupId) {
+  
+  var usrId = "U5ace....."; // User ID ขอ BOT
+  var url = 'https://api.line.me/v2/bot/message/push';
+  var channel_access_token = "gAUA8....."; // Chanel Access Token ของ BOT
+  var postData = {
+    "to": groupId,
+    "messages" : [
+      {
+        "type" : "text",
+        "text" : Msg
+      }
+    ]
+  };
+  var options = {
+    "method" : "post",
+    "headers" : {
+      "Content-Type" : "application/json",
+      "Authorization" : "Bearer " + channel_access_token
+    },
+    "payload" : JSON.stringify(postData)
+  };
+  UrlFetchApp.fetch(url, options);
+}
+  
